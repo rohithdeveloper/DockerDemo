@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: Test@123
+      MYSQL_DATABASE: rmqdemo
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"    # RabbitMQ AMQP port
+      - "15672:15672"  # RabbitMQ Management UI port
+    networks:
+      - app-network
+
+  springboot-app:
+    image: your-springboot-image
+    container_name: springboot-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - rabbitmq
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/rmqdemo
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Test@123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+    networks:
+      - app-network
+
+volumes:
+  mysql-data:
+
+networks:
+  app-network:
