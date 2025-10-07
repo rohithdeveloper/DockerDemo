@@ -13,6 +13,10 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -22,15 +26,21 @@ services:
       - "15672:15672"  # RabbitMQ Management UI port
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      timeout: 20s
+      retries: 10
 
   springboot-app:
-    image: your-springboot-image
-    container_name: springboot-app
+    build: .
+    container_name: rmqdemo
     ports:
       - "8080:8080"
     depends_on:
-      - mysql
-      - rabbitmq
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/rmqdemo
       SPRING_DATASOURCE_USERNAME: root
